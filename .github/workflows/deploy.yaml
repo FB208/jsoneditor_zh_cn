@@ -41,32 +41,12 @@ jobs:
             <script src="dist/jsoneditor.min.js"></script>
             <style>
               * { box-sizing: border-box; margin: 0; padding: 0; }
-              body { 
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-                min-height: 100vh;
-                padding: 20px;
-              }
-              .container { max-width: 1200px; margin: 0 auto; }
-              h1 { 
-                color: #fff; 
-                text-align: center; 
-                margin-bottom: 20px;
-                font-size: 2rem;
-              }
-              #jsoneditor { 
-                width: 100%; 
-                height: calc(100vh - 180px);
-                border-radius: 8px;
-                overflow: hidden;
-              }
+              html, body { width: 100%; height: 100%; overflow: hidden; }
+              #jsoneditor { width: 100%; height: 100%; }
             </style>
           </head>
           <body>
-            <div class="container">
-              <h1>🔧 JSONEditor 中文版</h1>
-              <div id="jsoneditor"></div>
-            </div>
+            <div id="jsoneditor"></div>
             <script>
               const container = document.getElementById('jsoneditor');
               const editor = new JSONEditor(container, {
@@ -78,22 +58,6 @@ jobs:
                 "功能": ["查看", "编辑", "格式化", "验证"],
                 "示例": { "字符串": "你好", "数字": 123, "布尔": true, "空值": null }
               });
-              document.getElementById('formatBtn').onclick = () => {
-                try { editor.set(editor.get()); } catch(e) { alert('JSON格式错误'); }
-              };
-              document.getElementById('compactBtn').onclick = () => {
-                try { 
-                  const text = JSON.stringify(editor.get());
-                  editor.setText(text);
-                } catch(e) { alert('JSON格式错误'); }
-              };
-              document.getElementById('clearBtn').onclick = () => editor.set({});
-              document.getElementById('copyBtn').onclick = () => {
-                try {
-                  navigator.clipboard.writeText(JSON.stringify(editor.get(), null, 2));
-                  alert('已复制到剪贴板');
-                } catch(e) { alert('复制失败'); }
-              };
             </script>
           </body>
           </html>

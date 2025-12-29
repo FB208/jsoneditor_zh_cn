@@ -54,33 +54,6 @@ jobs:
                 margin-bottom: 20px;
                 font-size: 2rem;
               }
-              .toolbar {
-                display: flex;
-                gap: 10px;
-                margin-bottom: 15px;
-                flex-wrap: wrap;
-              }
-              .toolbar button {
-                padding: 8px 16px;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 14px;
-                background: #4a90d9;
-                color: #fff;
-                transition: background 0.2s;
-              }
-              .toolbar button:hover { background: #357abd; }
-              .toolbar a {
-                padding: 8px 16px;
-                border-radius: 6px;
-                font-size: 14px;
-                background: #2d3748;
-                color: #a0aec0;
-                text-decoration: none;
-                transition: background 0.2s;
-              }
-              .toolbar a:hover { background: #4a5568; color: #fff; }
               #jsoneditor { 
                 width: 100%; 
                 height: calc(100vh - 180px);
@@ -92,14 +65,6 @@ jobs:
           <body>
             <div class="container">
               <h1>🔧 JSONEditor 中文版</h1>
-              <div class="toolbar">
-                <button id="formatBtn">格式化</button>
-                <button id="compactBtn">压缩</button>
-                <button id="clearBtn">清空</button>
-                <button id="copyBtn">复制</button>
-                <a href="examples/01_basic_usage.html">示例</a>
-                <a href="docs/api.md">API文档</a>
-              </div>
               <div id="jsoneditor"></div>
             </div>
             <script>

@@ -1,0 +1,106 @@
+name: Build and Deploy on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Archive build artifact
+        run: |
+          tar -czf dist.tgz -C dist .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-dist
+          path: dist.tgz
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: static-dist
+
+      - name: Upload via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          source: "dist.tgz"
+          target: "/tmp"
+
+      - name: Remote deploy commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          script: |
+            set -e
+            TMP_DIR=/tmp
+            DEST_DIR=${{ secrets.NGINX_HTML_DIR }}
+            mkdir -p "$TMP_DIR/deploy_dist"
+            tar -xzf "$TMP_DIR/dist.tgz" -C "$TMP_DIR/deploy_dist"
+            # 备份当前站点
+            if [ -d "$DEST_DIR" ]; then
+              ts=$(date +%Y%m%d%H%M%S)
+              mv "$DEST_DIR" "${DEST_DIR}-${ts}-bak" || true
+            fi
+            mkdir -p "$DEST_DIR"
+            rsync -a --delete "$TMP_DIR/deploy_dist/" "$DEST_DIR/"
+            # 基础权限与所有权（如需）
+            if command -v restorecon >/dev/null 2>&1; then restorecon -R "$DEST_DIR"; fi
+
+  notify:
+    name: Send email notification
+    needs:
+      - build-and-push
+      - deploy
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_PASSWORD }}
+          subject: "[jsoneditor] Tag ${{ github.ref_name }} 部署结果: build=${{ needs.build-and-push.result }}, deploy=${{ needs.deploy.result }}"
+          to: ${{ secrets.GMAIL_TO }}
+          from: ${{ secrets.GMAIL_USERNAME }}
+          secure: false
+          body: |
+            仓库: ${{ github.repository }}
+            触发: push tag ${{ github.ref_name }}
+            构建: ${{ needs.build-and-push.result }}
+            部署: ${{ needs.deploy.result }}
+            提交: ${{ github.sha }}
+            运行链接: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            触发人: ${{ github.actor }}
+
